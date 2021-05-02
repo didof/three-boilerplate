@@ -18,85 +18,110 @@ export default class App {
       height: canvas.height || window.innerHeight,
     }
 
-    this._Initialize(canvas.querySelector)
+    /**
+     * Loaders
+     */
+    this.textureLoader = new THREE.TextureLoader()
+    this.cubeTextureLoader = new THREE.CubeTextureLoader()
 
-    window.addEventListener('resize', this._ResizeEvent)
+    this.Initialize(canvas.querySelector)
+
+    window.addEventListener('resize', this.ResizeEvent)
   }
 
-  _Initialize = selector => {
+  Initialize = selector => {
     const canvas = document.querySelector(selector || 'canvas.webgl')
 
     /**
      * Renderer
      */
-    this._renderer = new THREE.WebGLRenderer({
+    this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
     })
-    this._renderer.shadowMap.enabled = true
-    this._renderer.shadowMap.type = THREE.PCFSoftShadowMap
-    this._setRendererConfig()
+    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    this.setRendererConfig()
 
     /**
      * Scene
      */
-    this._scene = new THREE.Scene()
+    this.InitScene({
+      skyboxFolderName: 'openFields',
+    })
 
     const test = new THREE.Mesh(
       new THREE.BoxBufferGeometry(1, 1, 1),
       new THREE.MeshBasicMaterial({ color: 'red' })
     )
-    this._scene.add(test)
+    this.scene.add(test)
 
     /**
      * Camera
      */
-    this._camera = new THREE.PerspectiveCamera(
+    this.camera = new THREE.PerspectiveCamera(
       75,
       this.sizes.width / this.sizes.height,
       0.1,
       100
     )
-    this._camera.position.set(0.25, -0.25, 4)
-    this._scene.add(this._camera)
+    this.camera.position.set(0.25, -0.25, 4)
+    this.scene.add(this.camera)
 
-    this._controls = new OrbitControls(this._camera, canvas)
-    this._controls.enableDamping = true
+    this.controls = new OrbitControls(this.camera, canvas)
+    this.controls.enableDamping = true
   }
 
-  _setRendererConfig = () => {
-    this._renderer.setSize(this.sizes.width, this.sizes.height)
-    this._renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  InitScene = ({ skyboxFolderName }) => {
+    this.scene = new THREE.Scene()
+
+    /**
+     * Set Skybox
+     */
+    const cubeTextures = ['px', 'nx', 'py', 'ny', 'pz', 'nz'].map(
+      direction =>
+        `/textures/environmentMaps/${skyboxFolderName}/${direction}.jpg`
+    )
+
+    const environmentMap = this.cubeTextureLoader.load(cubeTextures)
+    environmentMap.encoding = THREE.sRGBEncoding
+    this.scene.background = environmentMap
+    this.scene.environment = environmentMap
   }
 
-  _ResizeEvent = () => {
+  setRendererConfig = () => {
+    this.renderer.setSize(this.sizes.width, this.sizes.height)
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  }
+
+  ResizeEvent = () => {
     // Update sizes
     this.sizes.width = window.innerWidth
     this.sizes.height = window.innerHeight
 
     // Update camera
-    this._camera.aspect = this.sizes.width / this.sizes.height
-    this._camera.updateProjectionMatrix()
+    this.camera.aspect = this.sizes.width / this.sizes.height
+    this.camera.updateProjectionMatrix()
 
     // Update renderer
-    this._setRendererConfig()
+    this.setRendererConfig()
   }
 
-  _Tick = () => {
-    const et = this._clock.getElapsedTime()
+  Tick = () => {
+    const et = this.clock.getElapsedTime()
 
     // Update controls
-    this._controls.update()
+    this.controls.update()
 
     // Render
-    this._renderer.render(this._scene, this._camera)
+    this.renderer.render(this.scene, this.camera)
 
     // Call tick again on the next frame
-    window.requestAnimationFrame(this._Tick)
+    window.requestAnimationFrame(this.Tick)
   }
 
   Start() {
-    this._clock = new THREE.Clock()
-    this._Tick()
+    this.clock = new THREE.Clock()
+    this.Tick()
   }
 }
