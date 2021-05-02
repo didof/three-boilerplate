@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'dat.gui'
-import debugObj from './debug'
-
-const gui = new dat.GUI()
+import gui, {
+  debugObj,
+  debugToneMappingType,
+  debugToneMappingExposure,
+} from './debug'
 
 const defaultConfig = {
   canvas: {
@@ -109,6 +110,8 @@ export default class App {
 
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
     this.renderer.toneMappingExposure = 2
+    debugToneMappingType(this.renderer, this.updateAllMaterials)
+    debugToneMappingExposure(this.renderer)
 
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
