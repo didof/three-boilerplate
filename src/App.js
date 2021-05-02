@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
+import debugObj from './debug'
 
 const gui = new dat.GUI()
 
@@ -26,7 +27,7 @@ export default class App {
 
     this.Initialize(canvas.querySelector)
 
-    window.addEventListener('resize', this.ResizeEvent)
+    window.addEventListener('resize', this.resizeEvent)
   }
 
   Initialize = selector => {
@@ -35,13 +36,7 @@ export default class App {
     /**
      * Renderer
      */
-    this.renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-    })
-    this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
-    this.setRendererConfig()
+    this.InitRenderer({ canvas })
 
     /**
      * Scene
@@ -50,10 +45,22 @@ export default class App {
       skyboxFolderName: 'openFields',
     })
 
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 5)
+    directionalLight.position.set(0.25, 3, 5)
+    directionalLight.castShadow = true
+    directionalLight.shadow.camera.far = 15
+    this.scene.add(directionalLight)
+
     const test = new THREE.Mesh(
-      new THREE.BoxBufferGeometry(1, 1, 1),
-      new THREE.MeshBasicMaterial({ color: 'red' })
+      new THREE.SphereBufferGeometry(1, 32, 32),
+      new THREE.MeshStandardMaterial({
+        color: 'white',
+        metalness: 1,
+        roughness: 0,
+      })
     )
+    gui.add(test.material, 'metalness', 0, 1, 0.01)
+    gui.add(test.material, 'roughness', 0, 1, 0.01)
     this.scene.add(test)
 
     /**
@@ -69,7 +76,10 @@ export default class App {
     this.scene.add(this.camera)
 
     this.controls = new OrbitControls(this.camera, canvas)
+    this.controls.target.set(0, 0, 0)
     this.controls.enableDamping = true
+
+    this.updateAllMaterials()
   }
 
   InitScene = ({ skyboxFolderName }) => {
@@ -89,12 +99,29 @@ export default class App {
     this.scene.environment = environmentMap
   }
 
-  setRendererConfig = () => {
+  InitRenderer = ({ canvas }) => {
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+    })
+    this.renderer.physicallyCorrectLights = true
+    this.renderer.outputEncoding = THREE.sRGBEncoding
+
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping
+    this.renderer.toneMappingExposure = 2
+
+    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
+    this.updateRendererSize()
+  }
+
+  updateRendererSize = () => {
     this.renderer.setSize(this.sizes.width, this.sizes.height)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   }
 
-  ResizeEvent = () => {
+  resizeEvent = () => {
     // Update sizes
     this.sizes.width = window.innerWidth
     this.sizes.height = window.innerHeight
@@ -104,7 +131,21 @@ export default class App {
     this.camera.updateProjectionMatrix()
 
     // Update renderer
-    this.setRendererConfig()
+    this.updateRendererSize()
+  }
+
+  updateAllMaterials = () => {
+    this.scene.traverse(child => {
+      if (
+        child instanceof THREE.Mesh &&
+        child.material instanceof THREE.MeshStandardMaterial
+      ) {
+        child.material.envMapIntensity = debugObj.envMapIntensity
+        child.material.needsUpdate = true
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
   }
 
   Tick = () => {
