@@ -48,7 +48,7 @@ export const debugLight = scene => {
   }
 
   return light => {
-    const { type } = light
+    const { uuid: lightUuid, type } = light
 
     const lightHelper = new types[type](light)
     scene.add(lightHelper)

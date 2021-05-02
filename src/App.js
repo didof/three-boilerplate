@@ -4,8 +4,8 @@ import gui, {
   debugObj,
   debugToneMappingType,
   debugToneMappingExposure,
-  debugLight,
 } from './debug'
+import { buildDirectionalLight } from './utils/lights'
 
 const defaultConfig = {
   canvas: {
@@ -47,21 +47,7 @@ export default class App {
       skyboxFolderName: 'openFields',
     })
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 5)
-    directionalLight.position.set(0.25, 3, 4)
-    directionalLight.castShadow = true
-    directionalLight.shadow.mapSize.width = 512
-    directionalLight.shadow.mapSize.height = 512
-    directionalLight.shadow.camera.near = 0.5
-    directionalLight.shadow.camera.far = 10
-    this.scene.add(directionalLight)
-    debugLight(this.scene, 'directional')(directionalLight)
-
-    const h = new THREE.DirectionalLightHelper(directionalLight)
-    this.scene.add(h)
-
-    const h2 = new THREE.CameraHelper(directionalLight.shadow.camera)
-    this.scene.add(h2)
+    buildDirectionalLight(this.scene, true)
 
     const test = new THREE.Mesh(
       new THREE.SphereBufferGeometry(1, 32, 32),
