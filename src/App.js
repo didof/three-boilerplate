@@ -4,6 +4,7 @@ import gui, {
   debugObj,
   debugToneMappingType,
   debugToneMappingExposure,
+  debugLight,
 } from './debug'
 
 const defaultConfig = {
@@ -47,10 +48,20 @@ export default class App {
     })
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 5)
-    directionalLight.position.set(0.25, 3, 5)
+    directionalLight.position.set(0.25, 3, 4)
     directionalLight.castShadow = true
-    directionalLight.shadow.camera.far = 15
+    directionalLight.shadow.mapSize.width = 512
+    directionalLight.shadow.mapSize.height = 512
+    directionalLight.shadow.camera.near = 0.5
+    directionalLight.shadow.camera.far = 10
     this.scene.add(directionalLight)
+    debugLight(this.scene, 'directional')(directionalLight)
+
+    const h = new THREE.DirectionalLightHelper(directionalLight)
+    this.scene.add(h)
+
+    const h2 = new THREE.CameraHelper(directionalLight.shadow.camera)
+    this.scene.add(h2)
 
     const test = new THREE.Mesh(
       new THREE.SphereBufferGeometry(1, 32, 32),
@@ -60,9 +71,20 @@ export default class App {
         roughness: 0,
       })
     )
+    test.castShadow = true
+    test.receiveShadow = true
     gui.add(test.material, 'metalness', 0, 1, 0.01)
     gui.add(test.material, 'roughness', 0, 1, 0.01)
     this.scene.add(test)
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(10, 10),
+      new THREE.MeshStandardMaterial({ color: 0xffffff })
+    )
+    floor.rotation.x = -Math.PI * 0.5
+    floor.position.set(0, -2, 0)
+    floor.receiveShadow = true
+    this.scene.add(floor)
 
     /**
      * Camera
