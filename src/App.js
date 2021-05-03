@@ -31,17 +31,35 @@ export default class App {
     this.textureLoader = new THREE.TextureLoader()
     this.cubeTextureLoader = new THREE.CubeTextureLoader()
 
-    this.mixers = {
-      fox: {
-        update() {},
-      },
+    this.mixer = {
+      update() {},
     }
-
-    this.gltfLoader = new GLTFLoader()
 
     this.Initialize(canvas.querySelector)
 
+    this._LoadAnimatedModel()
+
     window.addEventListener('resize', this.resizeEvent)
+  }
+
+  _LoadAnimatedModel() {
+    const loader = new FBXLoader()
+    loader.setPath('/models/fbx/characters/')
+    loader.load('paladin.fbx', fbx => {
+      fbx.scale.setScalar(0.01)
+      fbx.traverse(c => {
+        c.castShadow = true
+      })
+      this.mixer = new THREE.AnimationMixer(fbx)
+
+      const anim = new FBXLoader()
+      anim.setPath('/models/fbx/animations/')
+      anim.load('walk.fbx', anim => {
+        const walk = this.mixer.clipAction(anim.animations[0])
+        walk.play()
+      })
+      this.scene.add(fbx)
+    })
   }
 
   Initialize = selector => {
@@ -58,23 +76,16 @@ export default class App {
     this.InitScene({
       skyboxFolderName: 'openFields',
     })
+    this.updateAllMaterials()
 
+    /**
+     * Light
+     */
     buildDirectionalLight(this.scene)
 
-    const test = new THREE.Mesh(
-      new THREE.SphereBufferGeometry(1, 32, 32),
-      new THREE.MeshStandardMaterial({
-        color: 'white',
-        metalness: 1,
-        roughness: 0,
-      })
-    )
-    test.castShadow = true
-    test.receiveShadow = true
-    gui.add(test.material, 'metalness', 0, 1, 0.01)
-    gui.add(test.material, 'roughness', 0, 1, 0.01)
-    // this.scene.add(test)
-
+    /**
+     * Floor
+     */
     const floor = new THREE.Mesh(
       new THREE.PlaneBufferGeometry(10, 10),
       new THREE.MeshStandardMaterial({ color: 0xffffff })
@@ -83,90 +94,16 @@ export default class App {
     floor.receiveShadow = true
     this.scene.add(floor)
 
+    /**
+     * Camera
+     */
+
     this.InitCamera()
 
+    /**
+     * Controls
+     */
     this.InitControls({ canvas })
-
-    this.updateAllMaterials()
-
-    this.UseGltfLoader(
-      {
-        path: '/models/Fox/glTF/Fox.gltf',
-        scaleFactor: 0.01,
-        mixerName: 'fox',
-      },
-      (mixer, action, index) => {
-        switch (index) {
-          case 0:
-            mixer.act.lookAround = action
-            break
-          case 1:
-            mixer.act.walk = action
-            break
-          case 2:
-            mixer.act.run = action
-            break
-        }
-
-        mixer.act.lookAround.play()
-      }
-    )
-
-    window.addEventListener('keydown', event => {
-      const { key } = event
-      switch (key) {
-        case 'w':
-          this.mixers.fox.entity.position.z += 0.05
-          this.mixers.fox.act.lookAround.stop()
-          this.mixers.fox.act.run.stop()
-          this.mixers.fox.act.walk.play()
-          break
-        case 'W':
-          this.mixers.fox.entity.position.z += 0.2
-          this.mixers.fox.act.lookAround.stop()
-          this.mixers.fox.act.walk.stop()
-          this.mixers.fox.act.run.play()
-          break
-      }
-    })
-  }
-
-  // UseGltfLoader = ({ path, scaleFactor, mixerName }, cb) => {
-  //   this.gltfLoader.load(path, gltf => {
-  //     gltf.scene.scale.set(scaleFactor, scaleFactor, scaleFactor)
-  //     gltf.scene.traverse(child => {
-  //       child.castShadow = true
-  //     })
-
-  //     this.mixers[mixerName] = new THREE.AnimationMixer(gltf.scene)
-  //     this.mixers[mixerName].entity = gltf.scene
-  //     this.mixers[mixerName].act = {}
-  //     gltf.animations.forEach((animation, index) => {
-  //       const action = this.mixers[mixerName].clipAction(animation)
-  //       return cb(this.mixers[mixerName], action, index)
-  //     })
-
-  //     this.scene.add(gltf.scene)
-  //   })
-  // }
-
-  UseGltfLoader = ({ path, scaleFactor, mixerName }, cb) => {
-    this.gltfLoader.load(path, gltf => {
-      gltf.scene.scale.set(scaleFactor, scaleFactor, scaleFactor)
-      gltf.scene.traverse(child => {
-        child.castShadow = true
-      })
-
-      this.mixers[mixerName] = new THREE.AnimationMixer(gltf.scene)
-      this.mixers[mixerName].entity = gltf.scene
-      this.mixers[mixerName].act = {}
-      gltf.animations.forEach((animation, index) => {
-        const action = this.mixers[mixerName].clipAction(animation)
-        return cb(this.mixers[mixerName], action, index)
-      })
-
-      this.scene.add(gltf.scene)
-    })
   }
 
   InitScene = ({ skyboxFolderName }) => {
@@ -258,17 +195,12 @@ export default class App {
     const deltaTime = elapsedTime - this.previousTime
     this.previousTime = elapsedTime
 
-    Object.keys(this.mixers).forEach(mixer => {
-      this.mixers[mixer].update(deltaTime)
-    })
+    this.mixer.update(deltaTime)
 
-    // Update controls
     this.controls.update()
 
-    // Render
     this.renderer.render(this.scene, this.camera)
 
-    // Call tick again on the next frame
     window.requestAnimationFrame(this.Tick)
   }
 
