@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import gui, {
   debugObj,
   debugToneMappingType,
@@ -30,12 +31,13 @@ export default class App {
     this.textureLoader = new THREE.TextureLoader()
     this.cubeTextureLoader = new THREE.CubeTextureLoader()
 
-    this.playerMixer = {
-      update() {},
+    this.mixers = {
+      fox: {
+        update() {},
+      },
     }
 
-    this.fbxModelLoader = new FBXLoader()
-    this.fbxAnimationsLoader = new FBXLoader()
+    this.gltfLoader = new GLTFLoader()
 
     this.Initialize(canvas.querySelector)
 
@@ -78,7 +80,6 @@ export default class App {
       new THREE.MeshStandardMaterial({ color: 0xffffff })
     )
     floor.rotation.x = -Math.PI * 0.5
-    floor.position.set(0, -2, 0)
     floor.receiveShadow = true
     this.scene.add(floor)
 
@@ -88,21 +89,83 @@ export default class App {
 
     this.updateAllMaterials()
 
-    /**
-     * Knight
-     */
-    this.fbxModelLoader.load('/models/fbx/knight.fbx', fbx => {
-      fbx.scale.setScalar(0.01)
-      fbx.traverse(child => {
+    this.UseGltfLoader(
+      {
+        path: '/models/Fox/glTF/Fox.gltf',
+        scaleFactor: 0.01,
+        mixerName: 'fox',
+      },
+      (mixer, action, index) => {
+        switch (index) {
+          case 0:
+            mixer.act.lookAround = action
+            break
+          case 1:
+            mixer.act.walk = action
+            break
+          case 2:
+            mixer.act.run = action
+            break
+        }
+
+        mixer.act.lookAround.play()
+      }
+    )
+
+    window.addEventListener('keydown', event => {
+      const { key } = event
+      switch (key) {
+        case 'w':
+          this.mixers.fox.entity.position.z += 0.05
+          this.mixers.fox.act.lookAround.stop()
+          this.mixers.fox.act.run.stop()
+          this.mixers.fox.act.walk.play()
+          break
+        case 'W':
+          this.mixers.fox.entity.position.z += 0.2
+          this.mixers.fox.act.lookAround.stop()
+          this.mixers.fox.act.walk.stop()
+          this.mixers.fox.act.run.play()
+          break
+      }
+    })
+  }
+
+  // UseGltfLoader = ({ path, scaleFactor, mixerName }, cb) => {
+  //   this.gltfLoader.load(path, gltf => {
+  //     gltf.scene.scale.set(scaleFactor, scaleFactor, scaleFactor)
+  //     gltf.scene.traverse(child => {
+  //       child.castShadow = true
+  //     })
+
+  //     this.mixers[mixerName] = new THREE.AnimationMixer(gltf.scene)
+  //     this.mixers[mixerName].entity = gltf.scene
+  //     this.mixers[mixerName].act = {}
+  //     gltf.animations.forEach((animation, index) => {
+  //       const action = this.mixers[mixerName].clipAction(animation)
+  //       return cb(this.mixers[mixerName], action, index)
+  //     })
+
+  //     this.scene.add(gltf.scene)
+  //   })
+  // }
+
+  UseGltfLoader = ({ path, scaleFactor, mixerName }, cb) => {
+    this.gltfLoader.load(path, gltf => {
+      gltf.scene.scale.set(scaleFactor, scaleFactor, scaleFactor)
+      gltf.scene.traverse(child => {
         child.castShadow = true
       })
 
-      this.fbxAnimationsLoader.load('/models/fbx/Idle.fbx', anim => {
-        this.mixer = new THREE.AnimationMixer(fbx)
-        this.walk = this.mixer.clipAction(fbx.animations[1])
-        this.walk.play()
+      this.mixers[mixerName] = new THREE.AnimationMixer(gltf.scene)
+      this.mixers[mixerName].entity = gltf.scene
+      this.mixers[mixerName].act = {}
+      gltf.animations.forEach((animation, index) => {
+        const action = this.mixers[mixerName].clipAction(animation)
+        return cb(this.mixers[mixerName], action, index)
       })
-      this.scene.add(fbx)
+
+      this.scene.add(gltf.scene)
     })
   }
 
@@ -129,7 +192,7 @@ export default class App {
     const near = 0.1
     const far = 100
     this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
-    this.camera.position.set(0.25, -0.25, 4)
+    this.camera.position.set(2, 2, 3)
     this.scene.add(this.camera)
   }
 
@@ -195,7 +258,9 @@ export default class App {
     const deltaTime = elapsedTime - this.previousTime
     this.previousTime = elapsedTime
 
-    this.playerMixer.update(deltaTime)
+    Object.keys(this.mixers).forEach(mixer => {
+      this.mixers[mixer].update(deltaTime)
+    })
 
     // Update controls
     this.controls.update()
