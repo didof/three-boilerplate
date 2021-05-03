@@ -1,183 +1,151 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import gui, {
+import {
   debugObj,
   debugToneMappingType,
   debugToneMappingExposure,
 } from './debug'
 import { buildDirectionalLight } from './utils/lights'
+import { getCubeTexture } from './utils/textures'
+import { buildFloor } from './utils/testObjects'
 
-const defaultConfig = {
-  canvas: {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  },
-}
+import config from './config'
 
 export default class App {
-  constructor({ canvas } = defaultConfig) {
+  constructor() {
+    this._canvas = document.querySelector(config.canvas.querySelector)
+
     this.sizes = {
-      width: canvas.width || window.innerWidth,
-      height: canvas.height || window.innerHeight,
+      width: config.canvas.width,
+      height: config.canvas.height,
     }
 
     this.previousTime = 0
 
-    /**
-     * Loaders
-     */
-    this.textureLoader = new THREE.TextureLoader()
-    this.cubeTextureLoader = new THREE.CubeTextureLoader()
+    this._InitLoaders()
+    this._Init()
 
     this.mixer = {
       update() {},
     }
 
-    this.Initialize(canvas.querySelector)
-
     this._LoadAnimatedModel()
-
-    window.addEventListener('resize', this.resizeEvent)
+    this._InitListeners()
   }
 
   _LoadAnimatedModel() {
     const loader = new FBXLoader()
-    loader.setPath('/models/fbx/characters/')
-    loader.load('paladin.fbx', fbx => {
+    loader.load('/models/fbx/characters/paladin.fbx', fbx => {
       fbx.scale.setScalar(0.01)
       fbx.traverse(c => {
         c.castShadow = true
       })
       this.mixer = new THREE.AnimationMixer(fbx)
 
-      const anim = new FBXLoader()
-      anim.setPath('/models/fbx/animations/')
-      anim.load('walk.fbx', anim => {
-        const walk = this.mixer.clipAction(anim.animations[0])
-        walk.play()
+      loader.load('/models/fbx/animations/idle.fbx', anim => {
+        const idle = this.mixer.clipAction(anim.animations[0])
+        idle.play()
       })
-      this.scene.add(fbx)
+      this._scene.add(fbx)
     })
   }
 
-  Initialize = selector => {
-    const canvas = document.querySelector(selector || 'canvas.webgl')
+  /**
+   * Initializers
+   */
+  _Init = () => {
+    this._InitRenderer()
+    this._InitScene()
+    this._InitCamera()
+    this._InitControls()
 
-    /**
-     * Renderer
-     */
-    this.InitRenderer({ canvas })
-
-    /**
-     * Scene
-     */
-    this.InitScene({
-      skyboxFolderName: 'openFields',
-    })
-    this.updateAllMaterials()
-
-    /**
-     * Light
-     */
-    buildDirectionalLight(this.scene)
-
-    /**
-     * Floor
-     */
-    const floor = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(10, 10),
-      new THREE.MeshStandardMaterial({ color: 0xffffff })
-    )
-    floor.rotation.x = -Math.PI * 0.5
-    floor.receiveShadow = true
-    this.scene.add(floor)
-
-    /**
-     * Camera
-     */
-
-    this.InitCamera()
-
-    /**
-     * Controls
-     */
-    this.InitControls({ canvas })
+    buildDirectionalLight(this._scene)
+    buildFloor(this._scene)
   }
 
-  InitScene = ({ skyboxFolderName }) => {
-    this.scene = new THREE.Scene()
+  _InitScene = () => {
+    this._scene = new THREE.Scene()
 
     /**
      * Set Skybox
      */
-    const cubeTextures = ['px', 'nx', 'py', 'ny', 'pz', 'nz'].map(
-      direction =>
-        `/textures/environmentMaps/${skyboxFolderName}/${direction}.jpg`
-    )
+    const cubeTextures = getCubeTexture(config.skybox.folderName)
 
     const environmentMap = this.cubeTextureLoader.load(cubeTextures)
     environmentMap.encoding = THREE.sRGBEncoding
-    this.scene.background = environmentMap
-    this.scene.environment = environmentMap
+    this._scene.background = environmentMap
+    this._scene.environment = environmentMap
+
+    this._updateAllMaterials()
   }
 
-  InitCamera = () => {
-    const fov = 75
+  _InitCamera = () => {
+    const fov = config.camera.fov
     const aspect = this.sizes.width / this.sizes.height
-    const near = 0.1
-    const far = 100
-    this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
-    this.camera.position.set(2, 2, 3)
-    this.scene.add(this.camera)
+    const near = config.camera.near
+    const far = config.camera.far
+
+    this._camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
+
+    const { x, y, z } = config.camera.position
+    this._camera.position.set(x, y, z)
+
+    this._scene.add(this._camera)
   }
 
-  InitControls = ({ canvas }) => {
-    this.controls = new OrbitControls(this.camera, canvas)
-    this.controls.target.set(0, 0, 0)
-    this.controls.enableDamping = true
+  _InitControls = () => {
+    this._controls = new OrbitControls(this._camera, this._canvas)
+    this._controls.target.set(0, 0, 0)
+    this._controls.enableDamping = true
   }
 
-  InitRenderer = ({ canvas }) => {
+  _InitRenderer = () => {
     this.renderer = new THREE.WebGLRenderer({
-      canvas,
+      canvas: this._canvas,
       antialias: true,
     })
+
+    // TODO gui
     this.renderer.physicallyCorrectLights = true
+
+    // TODO gui
     this.renderer.outputEncoding = THREE.sRGBEncoding
 
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-    debugToneMappingType(this.renderer, this.updateAllMaterials)
+    debugToneMappingType(this.renderer, this._updateAllMaterials)
     this.renderer.toneMappingExposure = 2
     debugToneMappingExposure(this.renderer)
 
     this.renderer.shadowMap.enabled = true
+
+    // TODO gui
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-    this.updateRendererSize()
+    this._updateRendererSize()
   }
 
-  updateRendererSize = () => {
+  _InitLoaders = () => {
+    this.textureLoader = new THREE.TextureLoader()
+    this.cubeTextureLoader = new THREE.CubeTextureLoader()
+  }
+
+  _InitListeners = () => {
+    window.addEventListener('resize', this._onResizeEventTrigger)
+  }
+
+  /**
+   * Updaters
+   */
+  _updateRendererSize = () => {
     this.renderer.setSize(this.sizes.width, this.sizes.height)
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    this.renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, config.renderer.pixelRatioLimit)
+    )
   }
 
-  resizeEvent = () => {
-    // Update sizes
-    this.sizes.width = window.innerWidth
-    this.sizes.height = window.innerHeight
-
-    // Update camera
-    this.camera.aspect = this.sizes.width / this.sizes.height
-    this.camera.updateProjectionMatrix()
-
-    // Update renderer
-    this.updateRendererSize()
-  }
-
-  updateAllMaterials = () => {
-    this.scene.traverse(child => {
+  _updateAllMaterials = () => {
+    this._scene.traverse(child => {
       if (
         child instanceof THREE.Mesh &&
         child.material instanceof THREE.MeshStandardMaterial
@@ -190,22 +158,36 @@ export default class App {
     })
   }
 
-  Tick = () => {
+  /**
+   * Events Responses
+   */
+  _onResizeEventTrigger = () => {
+    this.sizes.width = window.innerWidth
+    this.sizes.height = window.innerHeight
+
+    this._camera.aspect = this.sizes.width / this.sizes.height
+    this._camera.updateProjectionMatrix()
+
+    this._updateRendererSize()
+  }
+
+  _Tick = () => {
     const elapsedTime = this.clock.getElapsedTime()
     const deltaTime = elapsedTime - this.previousTime
     this.previousTime = elapsedTime
 
     this.mixer.update(deltaTime)
 
-    this.controls.update()
+    this._controls.update()
 
-    this.renderer.render(this.scene, this.camera)
+    this.renderer.render(this._scene, this._camera)
 
-    window.requestAnimationFrame(this.Tick)
+    window.requestAnimationFrame(this._Tick)
   }
 
   Start() {
     this.clock = new THREE.Clock()
-    this.Tick()
+
+    this._Tick()
   }
 }
