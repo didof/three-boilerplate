@@ -1,15 +1,14 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import {
   debugObj,
   debugToneMappingType,
   debugToneMappingExposure,
-  debugFog,
 } from './debug'
 import { buildDirectionalLight } from './utils/lights'
 import { getCubeTexture } from './utils/textures'
 import { buildFloor } from './utils/testObjects'
+import useFog from './utils/useFog'
 
 import config from './config'
 
@@ -31,26 +30,7 @@ export default class App {
       update() {},
     }
 
-    this._LoadAnimatedModel()
-
     this._InitListeners()
-  }
-
-  _LoadAnimatedModel() {
-    const loader = new FBXLoader()
-    loader.load('/models/fbx/characters/paladin.fbx', fbx => {
-      fbx.scale.setScalar(0.01)
-      fbx.traverse(c => {
-        c.castShadow = true
-      })
-      this.mixer = new THREE.AnimationMixer(fbx)
-
-      loader.load('/models/fbx/animations/idle.fbx', anim => {
-        const idle = this.mixer.clipAction(anim.animations[0])
-        idle.play()
-      })
-      this._scene.add(fbx)
-    })
   }
 
   /**
@@ -78,8 +58,11 @@ export default class App {
     environmentMap.encoding = THREE.sRGBEncoding
     this._scene.background = environmentMap
     this._scene.environment = environmentMap
-    this._scene.fog = new THREE.Fog(0xaaaaaa, 2, 5)
-    debugFog(this._scene)
+
+    /**
+     * Fog
+     */
+    useFog(this._scene)
 
     this._updateAllMaterials()
   }

@@ -20,6 +20,14 @@ const config = {
   renderer: {
     pixelRatioLimit: 2,
   },
+  fog: {
+    enabled: true,
+    debug: true,
+    color: 0xaaaaaa,
+    near: 2,
+    far: 5,
+    isExp2: false,
+  },
 }
 
 export default config

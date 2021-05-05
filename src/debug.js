@@ -7,6 +7,7 @@ const folders = {}
 export const debugObj = {
   lights: {},
   envMapIntensity: 1,
+  fog: true,
 }
 
 export const debugToneMappingType = (renderer, updateAllMaterials) => {
@@ -70,6 +71,13 @@ export const debugLight = scene => {
     positionFolder.add(light.position, 'y', -5, 5, 0.01)
     positionFolder.add(light.position, 'z', -5, 5, 0.01)
   }
+}
+
+export const debugFog = scene => {
+  const activeFog = scene.fog
+  gui.add(debugObj, 'fog').onChange(() => {
+    scene.fog = debugObj.fog ? activeFog : null
+  })
 }
 
 export default gui
