@@ -16,10 +16,18 @@ export default class WalkState extends State {
 
     if (prevState) {
       const prevAction = this._parent._animations[prevState.Name]
-      this._animation.time = 0.0
       this._animation.enabled = true
-      this._animation.setEffectiveTimeScale(1.0)
-      this._animation.setEffectiveWeight(1.0)
+
+      if (prevState.Name === 'run') {
+        const ratio =
+          this._animation.getClip().duration / prevAction.getClip().duration
+        this._animation.time = prevAction.time * ratio
+      } else {
+        this._animation.time = 0.0
+        this._animation.setEffectiveTimeScale(1.0)
+        this._animation.setEffectiveWeight(1.0)
+      }
+
       this._animation.crossFadeFrom(prevAction, 0.5, true)
     }
 
