@@ -239,13 +239,6 @@ class PlayerController {
     if (!this._target) return
 
     this._stateMachine.Update(timeElapsed, this._input)
-
-    // if (this._input._keys.forward) {
-    //   this._animations[1].play()
-    //   this._target.scene.position.z += 0.1
-    // } else {
-    //   this._animations[1].stop()
-    // }
   }
 }
 
@@ -276,6 +269,9 @@ class PlayerControllerInput {
       case 68: // d
         this._keys.right = true
         break
+      case 16: // SHIFT
+        this._keys.shift = true
+        break
     }
   }
 
@@ -293,6 +289,9 @@ class PlayerControllerInput {
       case 68: // d
         this._keys.right = false
         break
+      case 16: // SHIFT
+        this._keys.shift = false
+        break
     }
   }
 }
@@ -303,7 +302,7 @@ class FiniteStateMachine {
     this._currentState = null
   }
 
-  _AddState = (name, state, animation) => {
+  _AddState = (name, state) => {
     this._states[name] = state
   }
 
@@ -344,6 +343,7 @@ class PlayerFSM extends FiniteStateMachine {
   _Init = () => {
     this._AddState('survey', SurveyState)
     this._AddState('walk', WalkState)
+    this._AddState('run', RunState)
   }
 }
 
@@ -369,7 +369,7 @@ class SurveyState extends State {
   }
 
   Enter(prevState) {
-    console.log('[SurveyState] Enter from ' + (prevState ? prevState.Name : ''))
+    console.log(`[SurveyState] ${prevState ? `to [${prevState.Name}]` : ''}`)
 
     if (prevState) {
       const prevAction = this._parent._animations[prevState.Name]
@@ -386,7 +386,13 @@ class SurveyState extends State {
   Exit() {}
 
   Update(_, input) {
-    if (input._keys.forward) {
+    const { forward, shift } = input._keys
+
+    if (forward) {
+      if (shift) {
+        this._parent.SetState('run')
+        return
+      }
       this._parent.SetState('walk')
     }
   }
@@ -404,7 +410,7 @@ class WalkState extends State {
   }
 
   Enter(prevState) {
-    console.log('[WalkState] Enter from ' + (prevState ? prevState.Name : ''))
+    console.log(`[WalkState] to [${prevState.Name}]`)
 
     if (prevState) {
       const prevAction = this._parent._animations[prevState.Name]
@@ -421,8 +427,58 @@ class WalkState extends State {
   Exit() {}
 
   Update(elapsedTime, input) {
-    if (!input._keys.forward) {
-      this._parent.SetState('survey')
+    const { forward, shift } = input._keys
+
+    if (forward) {
+      if (shift) {
+        this._parent.SetState('run')
+      }
+      return
     }
+
+    this._parent.SetState('survey')
+  }
+}
+
+class RunState extends State {
+  constructor(parent) {
+    super()
+    this._parent = parent
+    this._animation = parent._animations['run']
+  }
+
+  get Name() {
+    return 'run'
+  }
+
+  Enter(prevState) {
+    console.log(`[RunState] to [${prevState.Name}]`)
+
+    if (prevState) {
+      const prevAction = this._parent._animations[prevState.Name]
+      this._animation.time = 0.0
+      this._animation.enabled = true
+      this._animation.setEffectiveTimeScale(1.0)
+      this._animation.setEffectiveWeight(1.0)
+      this._animation.crossFadeFrom(prevAction, 0.5, true)
+    }
+
+    this._animation.play()
+  }
+
+  Exit() {}
+
+  Update(elapsedTime, input) {
+    const { forward, shift } = input._keys
+
+    if (forward) {
+      if (!shift) {
+        this._parent.SetState('walk')
+      }
+
+      return
+    }
+
+    this._parent.SetState('survey')
   }
 }
