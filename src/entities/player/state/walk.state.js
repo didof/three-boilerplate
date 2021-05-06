@@ -11,8 +11,8 @@ export default class WalkState extends State {
     return 'walk'
   }
 
-  Enter(prevState) {
-    console.log(`[WalkState] to [${prevState.Name}]`)
+  Enter(prevState, inverse = false) {
+    console.log(`[WalkState] to [${prevState.Name}] inverse: ${inverse}`)
 
     if (prevState) {
       const prevAction = this._parent._animations[prevState.Name]
@@ -31,15 +31,20 @@ export default class WalkState extends State {
       this._animation.crossFadeFrom(prevAction, 0.5, true)
     }
 
+    if (inverse) {
+      this._animation.paused = false
+      this._animation.timeScale = -1
+    }
+
     this._animation.play()
   }
 
   Exit() {}
 
   Update(elapsedTime, input) {
-    const { forward, shift } = input._keys
+    const { forward, backward, shift } = input._keys
 
-    if (forward) {
+    if (forward || backward) {
       if (shift) {
         this._parent.SetState('run')
       }

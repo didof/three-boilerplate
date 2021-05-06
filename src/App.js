@@ -167,7 +167,7 @@ export default class App {
     const deltaTime = elapsedTime - this.previousTime
     this.previousTime = elapsedTime
 
-    return [deltaTime, elapsedTime]
+    return [deltaTime, elapsedTime * 0.001]
   }
 
   _Tick = () => {
@@ -179,7 +179,7 @@ export default class App {
 
     this._controls.update()
 
-    this._player.Update(elapsedTime)
+    this._player.Update(deltaTime)
 
     this.renderer.render(this._scene, this._camera)
 

@@ -13,10 +13,17 @@ export default class PlayerController {
     this._input = new PlayerControllerInput()
     this._stateMachine = new PlayerFSM(this._animations)
 
-    this._Init()
+    this._LoadModel()
+    this._InitVectors()
   }
 
-  _Init = () => {
+  _InitVectors = () => {
+    this._decceleration = new THREE.Vector3(-0.0005, -0.0001, -5.0)
+    this._acceleration = new THREE.Vector3(1, 0.25, 50.0)
+    this._velocity = new THREE.Vector3(0, 0, 0)
+  }
+
+  _LoadModel = () => {
     const loaderManager = new THREE.LoadingManager()
     loaderManager.onLoad = () => {
       this._stateMachine.SetState('survey')
@@ -33,23 +40,95 @@ export default class PlayerController {
         }
       })
 
-      const mixer = new THREE.AnimationMixer(this._target.scene)
-      this._mixers.push(mixer)
-
-      this._animations = this._target.animations.map(clip => {
-        this._animations[clip.name.toLowerCase()] = mixer.clipAction(clip)
-      })
+      this._UseMixer()
 
       this._scene.add(this._target.scene)
     })
   }
 
-  Update = timeElapsed => {
+  _UseMixer = () => {
+    const mixer = new THREE.AnimationMixer(this._target.scene)
+    this._mixers.push(mixer)
+
+    this._animations = this._target.animations.map(clip => {
+      this._animations[clip.name.toLowerCase()] = mixer.clipAction(clip)
+    })
+  }
+
+  Update = deltaTime => {
     if (!this._target) return
 
-    this._stateMachine.Update(timeElapsed, this._input)
+    /**
+     * Update Animations
+     */
+    this._stateMachine.Update(deltaTime, this._input)
 
-    // TODO move it
+    /**
+     * Update Position
+     */
+    const entity = this._target.scene
+    const keys = this._input._keys
+
+    const frameDecceleration = new THREE.Vector3(
+      this._velocity.x * this._decceleration.x,
+      this._velocity.y * this._decceleration.y,
+      this._velocity.z * this._decceleration.z
+    )
+
+    frameDecceleration.multiplyScalar(deltaTime)
+    frameDecceleration.z =
+      Math.sign(frameDecceleration.z) *
+      Math.min(Math.abs(frameDecceleration.z), Math.abs(this._velocity.z))
+    this._velocity.add(frameDecceleration)
+
+    const acceleration = this._acceleration.clone()
+
+    if (keys.shift) {
+      acceleration.multiplyScalar(2.0)
+    }
+    if (keys.forward) {
+      this._velocity.z += acceleration.z * deltaTime
+    }
+    if (keys.backward) {
+      this._velocity.z -= acceleration.z * deltaTime
+    }
+
+    const oldPosition = new THREE.Vector3()
+    oldPosition.copy(entity.position)
+
+    const forward = new THREE.Vector3(0, 0, 1)
+    forward.applyQuaternion(entity.quaternion)
+    forward.normalize()
+
+    forward.multiplyScalar(this._velocity.z * deltaTime)
+
+    const _Q = new THREE.Quaternion()
+    const _A = new THREE.Vector3()
+    const _R = entity.quaternion.clone()
+
+    if (keys.left) {
+      _A.set(0, 1, 0)
+      _Q.setFromAxisAngle(_A, 4.0 * Math.PI * deltaTime * this._acceleration.y)
+      _R.multiply(_Q)
+    }
+    if (keys.right) {
+      _A.set(0, 1, 0)
+      _Q.setFromAxisAngle(_A, 4.0 * -Math.PI * deltaTime * this._acceleration.y)
+      _R.multiply(_Q)
+    }
+
+    entity.quaternion.copy(_R)
+
+    const sideways = new THREE.Vector3(1, 0, 0)
+    sideways.applyQuaternion(entity.quaternion)
+    sideways.normalize()
+
+    sideways.multiplyScalar(this._velocity.x * deltaTime)
+
+    entity.position.add(sideways)
+    entity.position.add(forward)
+
+    oldPosition.copy(entity.position)
   }
 }
 

@@ -38,9 +38,9 @@ export default class RunState extends State {
   Exit() {}
 
   Update(elapsedTime, input) {
-    const { forward, shift } = input._keys
+    const { forward, backward, shift } = input._keys
 
-    if (forward) {
+    if (forward || backward) {
       if (!shift) {
         this._parent.SetState('walk')
       }

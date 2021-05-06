@@ -29,14 +29,14 @@ export default class SurveyState extends State {
   Exit() {}
 
   Update(_, input) {
-    const { forward, shift } = input._keys
+    const { forward, backward, shift } = input._keys
 
-    if (forward) {
-      if (shift) {
+    if (forward || backward) {
+      if (shift && !backward) {
         this._parent.SetState('run')
         return
       }
-      this._parent.SetState('walk')
+      this._parent.SetState('walk', backward)
     }
   }
 }

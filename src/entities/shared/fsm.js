@@ -8,7 +8,7 @@ export default class FiniteStateMachine {
     this._states[name] = state
   }
 
-  SetState(name) {
+  SetState(name, inverse) {
     const prevState = this._currentState
 
     if (prevState) {
@@ -21,14 +21,12 @@ export default class FiniteStateMachine {
     const state = new this._states[name](this)
 
     this._currentState = state
-    state.Enter(prevState)
+    state.Enter(prevState, inverse)
   }
 
   Update(timeElapsed, input) {
     if (!this._currentState) return
 
     this._currentState.Update(timeElapsed, input)
-
-    // TODO movement across world
   }
 }
