@@ -16,10 +16,19 @@ export default class RunState extends State {
 
     if (prevState) {
       const prevAction = this._parent._animations[prevState.Name]
-      this._animation.time = 0.0
+
       this._animation.enabled = true
-      this._animation.setEffectiveTimeScale(1.0)
-      this._animation.setEffectiveWeight(1.0)
+
+      if (prevState.Name === 'walk') {
+        const ratio =
+          this._animation.getClip().duration / prevAction.getClip().duration
+        this._animation.time = prevAction.time * ratio
+      } else {
+        this._animation.time = 0.0
+        this._animation.setEffectiveTimeScale(1.0)
+        this._animation.setEffectiveWeight(1.0)
+      }
+
       this._animation.crossFadeFrom(prevAction, 0.5, true)
     }
 
@@ -35,6 +44,8 @@ export default class RunState extends State {
       if (!shift) {
         this._parent.SetState('walk')
       }
+
+      // TODO check simon Dev here
 
       return
     }

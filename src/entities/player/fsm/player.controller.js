@@ -48,6 +48,8 @@ export default class PlayerController {
     if (!this._target) return
 
     this._stateMachine.Update(timeElapsed, this._input)
+
+    // TODO move it
   }
 }
 
@@ -58,6 +60,7 @@ class PlayerControllerInput {
       backward: false,
       left: false,
       right: false,
+      shift: false,
     }
 
     document.addEventListener('keydown', this._KeyDown, false)
