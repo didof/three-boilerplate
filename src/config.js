@@ -5,7 +5,7 @@ const config = {
     height: window.innerHeight,
   },
   skybox: {
-    folderName: 'veniceStreet',
+    folderName: 'openFields',
   },
   camera: {
     fov: 75,
