@@ -1,5 +1,5 @@
-import FiniteStateMachine from '../../shared/fsm'
-import { SurveyState, WalkState, RunState } from '../state'
+import FiniteStateMachine from '../shared/fsm'
+import { SurveyState, WalkState, RunState } from './state'
 
 export default class PlayerFSM extends FiniteStateMachine {
   constructor(animations) {
