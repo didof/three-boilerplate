@@ -3,10 +3,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import PlayerFSM from './player.fsm'
 
 export default class PlayerController {
-  constructor(scene, camera, mixers) {
+  constructor(scene, camera) {
     this._scene = scene
     this._camera = camera
-    this._mixers = mixers
 
     this._animations = {}
 
@@ -40,18 +39,17 @@ export default class PlayerController {
         }
       })
 
-      this._UseMixer()
+      this._InitMixerAnimations()
 
       this._scene.add(this._target.scene)
     })
   }
 
-  _UseMixer = () => {
-    const mixer = new THREE.AnimationMixer(this._target.scene)
-    this._mixers.push(mixer)
+  _InitMixerAnimations = () => {
+    this._mixer = new THREE.AnimationMixer(this._target.scene)
 
     this._animations = this._target.animations.map(clip => {
-      this._animations[clip.name.toLowerCase()] = mixer.clipAction(clip)
+      this._animations[clip.name.toLowerCase()] = this._mixer.clipAction(clip)
     })
   }
 
@@ -129,6 +127,8 @@ export default class PlayerController {
     entity.position.add(forward)
 
     oldPosition.copy(entity.position)
+
+    this._mixer.update(deltaTime)
   }
 }
 

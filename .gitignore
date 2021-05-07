@@ -1,2 +1,6 @@
 node_modules
 src/old
+dist/
+static/textures/environmentMaps/cobblestoneGallery
+static/textures/environmentMaps/poorAlley
+static/textures/environmentMaps/veniceStreet
