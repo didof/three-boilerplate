@@ -202,20 +202,29 @@ class ThirdPersonCamera {
     this._currentPosition = new THREE.Vector3()
     this._currentLookAt = new THREE.Vector3()
 
-    this._playerOnLeft = true
+    this._playerPosition = -1
 
     document.addEventListener('contextmenu', this._OnRightClick, false)
   }
 
   _OnRightClick = event => {
     event.preventDefault()
-    this._playerOnLeft = !this._playerOnLeft
+    switch (this._playerPosition) {
+      case -1:
+        this._playerPosition = 0
+        break
+      case 0:
+        this._playerPosition = +1
+        break
+      case +1:
+        this._playerPosition = -1
+        break
+    }
   }
 
   _CalculateIdealOffset = () => {
-    const idealOffset = this._playerOnLeft
-      ? new THREE.Vector3(-7, 3, -7)
-      : new THREE.Vector3(7, 3, -7)
+    const x = 7 * this._playerPosition
+    const idealOffset = new THREE.Vector3(x, 3, -7)
     idealOffset.applyQuaternion(this._player.Rotation)
     idealOffset.add(this._player.Position)
     return idealOffset
