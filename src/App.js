@@ -27,10 +27,6 @@ export default class App {
     this._InitLoaders()
     this._Init()
 
-    this._mixers = []
-
-    this._player = new PlayerController(this._scene, this._camera, this._mixers)
-
     this._InitListeners()
   }
 
@@ -41,10 +37,12 @@ export default class App {
     this._InitRenderer()
     this._InitScene()
     this._InitCamera()
-    this._InitControls()
+    // this._InitControls()
+
+    this._InitCharacter()
 
     buildDirectionalLight(this._scene)
-    // buildFloor(this._scene)
+    buildFloor(this._scene)
   }
 
   _InitScene = () => {
@@ -122,6 +120,11 @@ export default class App {
     window.addEventListener('resize', this._onResizeEventTrigger)
   }
 
+  _InitCharacter = () => {
+    this._player = new PlayerController(this._scene, this._camera)
+    this._thirdPersonCamera = new ThirdPersonCamera(this._camera, this._player)
+  }
+
   /**
    * Updaters
    */
@@ -167,17 +170,15 @@ export default class App {
     const deltaTime = elapsedTime - this.previousTime
     this.previousTime = elapsedTime
 
-    return [deltaTime, elapsedTime * 0.001]
+    return deltaTime
   }
 
   _Tick = () => {
-    const [deltaTime, elapsedTime] = this._GetTimes()
+    const deltaTime = this._GetTimes()
 
-    this._mixers.forEach(m => {
-      m.update(deltaTime)
-    })
+    // this._controls.update()
 
-    this._controls.update()
+    this._thirdPersonCamera.Update(deltaTime)
 
     this._player.Update(deltaTime)
 
@@ -190,5 +191,51 @@ export default class App {
     this.clock = new THREE.Clock()
 
     this._Tick()
+  }
+}
+
+class ThirdPersonCamera {
+  constructor(camera, player) {
+    this._camera = camera
+    this._player = player
+
+    this._currentPosition = new THREE.Vector3()
+    this._currentLookAt = new THREE.Vector3()
+
+    this._playerOnLeft = true
+
+    document.addEventListener('contextmenu', this._OnRightClick, false)
+  }
+
+  _OnRightClick = event => {
+    event.preventDefault()
+    this._playerOnLeft = !this._playerOnLeft
+  }
+
+  _CalculateIdealOffset = () => {
+    const idealOffset = this._playerOnLeft
+      ? new THREE.Vector3(-7, 3, -7)
+      : new THREE.Vector3(7, 3, -7)
+    idealOffset.applyQuaternion(this._player.Rotation)
+    idealOffset.add(this._player.Position)
+    return idealOffset
+  }
+
+  _CalculateIdealLookat() {
+    const idealLookat = new THREE.Vector3(0, 5, 20)
+    idealLookat.applyQuaternion(this._player.Rotation)
+    idealLookat.add(this._player.Position)
+    return idealLookat
+  }
+
+  Update = deltaTime => {
+    const idealOffset = this._CalculateIdealOffset()
+    const idealLookat = this._CalculateIdealLookat()
+
+    this._currentPosition.lerp(idealOffset, deltaTime)
+    this._currentLookAt.lerp(idealLookat, deltaTime)
+
+    this._camera.position.copy(this._currentPosition)
+    this._camera.lookAt(this._currentLookAt)
   }
 }

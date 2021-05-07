@@ -20,6 +20,9 @@ const config = {
   renderer: {
     pixelRatioLimit: 2,
   },
+  lights: {
+    debug: false,
+  },
   fog: {
     enabled: false,
     debug: true,

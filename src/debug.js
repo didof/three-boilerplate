@@ -67,9 +67,9 @@ export const debugLight = scene => {
     lightFolder.add(light, 'castShadow')
 
     const positionFolder = lightFolder.addFolder('position')
-    positionFolder.add(light.position, 'x', -5, 5, 0.01)
-    positionFolder.add(light.position, 'y', -5, 5, 0.01)
-    positionFolder.add(light.position, 'z', -5, 5, 0.01)
+    positionFolder.add(light.position, 'x')
+    positionFolder.add(light.position, 'y')
+    positionFolder.add(light.position, 'z')
   }
 }
 

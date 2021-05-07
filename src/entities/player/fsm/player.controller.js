@@ -16,10 +16,22 @@ export default class PlayerController {
     this._InitVectors()
   }
 
+  get Position() {
+    return this._position
+  }
+
+  get Rotation() {
+    if (!this._target) {
+      return new THREE.Quaternion()
+    }
+    return this._target.scene.quaternion
+  }
+
   _InitVectors = () => {
     this._decceleration = new THREE.Vector3(-0.0005, -0.0001, -5.0)
     this._acceleration = new THREE.Vector3(1, 0.25, 50.0)
     this._velocity = new THREE.Vector3(0, 0, 0)
+    this._position = new THREE.Vector3()
   }
 
   _LoadModel = () => {
@@ -127,6 +139,8 @@ export default class PlayerController {
     entity.position.add(forward)
 
     oldPosition.copy(entity.position)
+
+    this._position.copy(entity.position)
 
     this._mixer.update(deltaTime)
   }
