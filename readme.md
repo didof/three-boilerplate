@@ -1,16 +1,8 @@
-# Three.js Journey
+# Didof's THREE.js boilerplate
 
-## Setup
-Download [Node.js](https://nodejs.org/en/download/).
-Run this followed commands:
+## TODO
 
-``` bash
-# Install dependencies (only the first time)
-npm install
-
-# Run the local server at localhost:8080
-npm run dev
-
-# Build for production in the dist/ directory
-npm run build
-```
+- Procedural terrain generation [simonDev](https://www.youtube.com/watch?v=hHGshzIXFWY&list=PLRL3Z3lpLmH3PNGZuDNf2WXnLTHpN9hXy)
+- Loading screen
+- Implement differential fog based upon altitude [simonDev](https://www.youtube.com/watch?v=k1zGz55EqfU)
+- Move computation to Web Worker [threejsfundamentals](https://threejsfundamentals.org/threejs/lessons/threejs-offscreencanvas.html)
