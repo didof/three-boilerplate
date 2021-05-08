@@ -51,6 +51,8 @@ export default class App {
     this._InitCamera()
     // this._InitControls()
 
+    this._InitSystemFeatures()
+
     this._InitCharacter()
 
     buildDirectionalLight(this._scene)
@@ -105,6 +107,37 @@ export default class App {
   //   this._controls.target.set(0, 0, 0)
   //   this._controls.enableDamping = true
   // }
+
+  _InitSystemFeatures = () => {
+    const geometry = new THREE.PlaneBufferGeometry(2, 2)
+
+    const material = new THREE.ShaderMaterial({
+      wireframe: false,
+      transparent: true,
+      uniforms: {
+        u_alpha: { value: 0.0 },
+      },
+      vertexShader: `
+        void main()
+        {
+          gl_Position =  vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float u_alpha;
+
+        void main()
+        {
+          gl_FragColor = vec4(0.0, 0.0, 0.0, u_alpha);
+        }
+      `,
+    })
+    const pausePanel = new THREE.Mesh(geometry, material)
+
+    this._app.pausePanelOpacity = material.uniforms.u_alpha
+
+    this._scene.add(pausePanel)
+  }
 
   _InitRenderer = () => {
     this.renderer = new THREE.WebGLRenderer({
@@ -195,7 +228,7 @@ export default class App {
 
     window.addEventListener(
       'orientationchange',
-      event => {
+      () => {
         this._app.paused = !isLandscape()
       },
       false
@@ -203,8 +236,8 @@ export default class App {
   }
 
   _OnKeyPress = () => {
-    window.addEventListener('keydown', event => {
-      switch (event.keyCode) {
+    window.addEventListener('keydown', ({ keyCode }) => {
+      switch (keyCode) {
         case 80: // p
           if (isLandscape()) this._app.paused = !this._app.paused
           break
@@ -223,8 +256,14 @@ export default class App {
     return deltaTime
   }
 
-  _Tick = () => {
-    console.log(this._app.paused)
+  _PlayTick = () => {
+    console.log('play')
+    if (this._app.paused) {
+      this._PauseTick()
+
+      return
+    }
+
     const deltaTime = this._GetTimes()
 
     // this._controls.update()
@@ -235,12 +274,34 @@ export default class App {
 
     this.renderer.render(this._scene, this._camera)
 
-    window.requestAnimationFrame(this._Tick)
+    window.requestAnimationFrame(this._PlayTick)
+  }
+
+  _PauseTick = () => {
+    console.log('pause')
+    const opacity = this._app.pausePanelOpacity
+    if (!this._app.paused) {
+      console.log(opacity.value)
+      if (opacity.value < 0.1) {
+        this._PlayTick()
+        return
+      }
+    }
+
+    if (this._app.paused && opacity.value < 0.8) {
+      opacity.value += 0.1
+    } else if (!this._app.paused && opacity.value > 0.0) {
+      opacity.value -= 0.1
+    }
+
+    this.renderer.render(this._scene, this._camera)
+
+    window.requestAnimationFrame(this._PauseTick)
   }
 
   Start() {
     this.clock = new THREE.Clock()
 
-    this._Tick()
+    this._PlayTick()
   }
 }
