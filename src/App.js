@@ -5,7 +5,7 @@ import {
   debugToneMappingType,
   debugToneMappingExposure,
 } from './debug'
-import { buildDirectionalLight } from './utils/lights'
+import { buildDirectionalLight, buildAmbientLight } from './utils/lights'
 import { getCubeTexture } from './utils/textures'
 import { buildFloor } from './utils/testObjects'
 import useFog from './utils/useFog'
@@ -43,6 +43,7 @@ export default class App {
     this._InitCharacter()
 
     buildDirectionalLight(this._scene)
+    buildAmbientLight(this._scene)
     buildFloor(this._scene)
   }
 
@@ -81,11 +82,11 @@ export default class App {
     this._scene.add(this._camera)
   }
 
-  _InitControls = () => {
-    this._controls = new OrbitControls(this._camera, this._canvas)
-    this._controls.target.set(0, 0, 0)
-    this._controls.enableDamping = true
-  }
+  // _InitControls = () => {
+  //   this._controls = new OrbitControls(this._camera, this._canvas)
+  //   this._controls.target.set(0, 0, 0)
+  //   this._controls.enableDamping = true
+  // }
 
   _InitRenderer = () => {
     this.renderer = new THREE.WebGLRenderer({

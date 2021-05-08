@@ -45,7 +45,7 @@ export default class WalkState extends State {
     const { forward, backward, shift } = input._keys
 
     if (forward || backward) {
-      if (shift) {
+      if (shift && !backward) {
         this._parent.SetState('run')
       }
       return

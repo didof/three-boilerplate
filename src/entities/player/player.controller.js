@@ -61,7 +61,8 @@ export default class PlayerController {
     this._mixer = new THREE.AnimationMixer(this._target.scene)
 
     this._animations = this._target.animations.map(clip => {
-      this._animations[clip.name.toLowerCase()] = this._mixer.clipAction(clip)
+      const name = clip.name.toLowerCase()
+      this._animations[name] = this._mixer.clipAction(clip)
     })
   }
 

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 
 export const buildFloor = scene => {
   const floor = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(100, 100),
+    new THREE.PlaneBufferGeometry(1000, 1000),
     new THREE.MeshStandardMaterial({ color: 0xffffff })
   )
 

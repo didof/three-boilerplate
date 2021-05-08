@@ -24,12 +24,11 @@ const config = {
     debug: false,
   },
   fog: {
-    enabled: false,
+    enabled: true,
     debug: true,
     color: 0xaaaaaa,
-    near: 2,
-    far: 10,
-    isExp2: false,
+    near: 20,
+    far: 50,
   },
 }
 
