@@ -4,6 +4,7 @@ import {
   debugObj,
   debugToneMappingType,
   debugToneMappingExposure,
+  debugJoystickPosition,
 } from './debug'
 import { buildDirectionalLight, buildAmbientLight } from './utils/lights'
 import { getCubeTexture } from './utils/textures'
@@ -11,7 +12,7 @@ import { buildFloor } from './utils/testObjects'
 import useFog from './utils/useFog'
 import PlayerController from './entities/player/player.controller'
 import ThirdPersonCamera from './entities/player/player.camera'
-import { buildPausePanel } from './utils/systemFeatures'
+import { buildPausePanel, buildJoystick } from './utils/systemFeatures'
 
 import { isMobileDevice, isLandscape } from './utils/mobileDevice'
 
@@ -112,15 +113,11 @@ export default class App {
   _InitSystemFeatures = () => {
     const pausePanel = buildPausePanel(this._app)
 
-    // TODO work in progess
-    // const geometry = new THREE.TorusBufferGeometry(5, 2, 8, 8)
-    // const material = new THREE.MeshStandardMaterial({ color: 0x0000ff })
-    // const mesh = new THREE.Mesh(geometry, material)
-    // // mesh.scale.set(0.1)
-    // mesh.scale.set(0.1, 0.1, 0.1)
-    // mesh.position.set(0, 0, -10)
+    // const joystick = buildJoystick()
 
-    // this._camera.add(mesh)
+    // this._app.joystickIcosahedron = joystick.children[1]
+
+    // this._camera.add(joystick)
 
     this._scene.add(pausePanel)
   }
@@ -240,7 +237,7 @@ export default class App {
     const deltaTime = elapsedTime - this._previousTime
     this._previousTime = elapsedTime
 
-    return deltaTime
+    return [deltaTime, elapsedTime]
   }
 
   _PlayTick = () => {
@@ -249,7 +246,7 @@ export default class App {
       return
     }
 
-    const deltaTime = this._GetTimes()
+    const [deltaTime, elapsedTime] = this._GetTimes()
 
     // this._controls.update()
 

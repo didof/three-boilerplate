@@ -1,15 +1,16 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import PlayerFSM from './player.fsm'
+import globalConfig from '../../config'
 
 export default class PlayerController {
-  constructor(scene, camera) {
+  constructor(scene, camera, config) {
     this._scene = scene
     this._camera = camera
 
     this._animations = {}
 
-    this._input = new PlayerControllerInput()
+    this._input = new PlayerControllerInput(config.isMobile)
     this._stateMachine = new PlayerFSM(this._animations)
 
     this._LoadModel()
@@ -148,7 +149,7 @@ export default class PlayerController {
 }
 
 class PlayerControllerInput {
-  constructor() {
+  constructor(isMobile) {
     this._keys = {
       forward: false,
       backward: false,
@@ -157,8 +158,23 @@ class PlayerControllerInput {
       shift: false,
     }
 
-    document.addEventListener('keydown', this._KeyDown, false)
-    document.addEventListener('keyup', this._KeyUp, false)
+    const useKeyboardEventListeners = () => {
+      document.addEventListener('keydown', this._KeyDown, false)
+      document.addEventListener('keyup', this._KeyUp, false)
+    }
+
+    const useTouchEventListeners = () => {
+      document.addEventListener('touchmove', this._TouchMove, false)
+      document.addEventListener('touchend', this._TouchEnd, false)
+    }
+
+    if (isMobile) {
+      useTouchEventListeners()
+      if (globalConfig.controls.enableKeyboardOnMobile)
+        useKeyboardEventListeners()
+    } else {
+      useKeyboardEventListeners()
+    }
   }
 
   _KeyDown = ({ keyCode }) => {
@@ -199,5 +215,35 @@ class PlayerControllerInput {
         this._keys.shift = false
         break
     }
+  }
+
+  _TouchMove = ({ changedTouches }) => {
+    const { clientX, clientY } = changedTouches[0]
+    if (this._previousClientX) {
+      if (clientX > this._previousClientX) {
+        this._keys.right = true
+      } else {
+        this._keys.left = true
+      }
+    }
+    if (this._previousClientY) {
+      if (clientY > this._previousClientY) {
+        this._keys.backward = true
+      } else {
+        this._keys.forward = true
+        if (clientY <= 100) this._keys.shift = true
+      }
+    }
+
+    this._previousClientX = clientX
+    this._previousClientY = clientY
+  }
+
+  _TouchEnd = () => {
+    Object.keys(this._keys).forEach(key => {
+      this._keys[key] = false
+    })
+    this._previousClientX = null
+    this._previousClientY = null
   }
 }

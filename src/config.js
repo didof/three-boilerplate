@@ -23,6 +23,9 @@ const config = {
   lights: {
     debug: false,
   },
+  controls: {
+    enableKeyboardOnMobile: true,
+  },
   fog: {
     enabled: true,
     debug: true,

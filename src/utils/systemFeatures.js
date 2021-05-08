@@ -30,3 +30,49 @@ export const buildPausePanel = app => {
 
   return pausePanel
 }
+
+export const buildJoystick = () => {
+  const buildJoystickTorus = material => {
+    const geometry = new THREE.TorusBufferGeometry(4, 0.7, 8, 10)
+    const mesh = new THREE.Mesh(geometry, material)
+
+    return mesh
+  }
+
+  const buildJoystickIcosahedron = material => {
+    const geometry = new THREE.IcosahedronGeometry(2.3, 0)
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.position.z = 1.5
+
+    return mesh
+  }
+
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xffa500,
+    roughness: 0.7,
+  })
+
+  const joystick = new THREE.Object3D()
+  const torus = buildJoystickTorus(material)
+  const icosahedron = buildJoystickIcosahedron(material)
+
+  joystick.scale.set(0.05, 0.05, 0.05)
+  const x = -(window.innerWidth / 1000 + 0.1)
+
+  joystick.position.set(x, -0.4, -1)
+  joystick.rotation.y = Math.PI * 0.15
+
+  joystick.add(torus, icosahedron)
+
+  return joystick
+}
+
+/**
+ * Idea for tomorrow:
+ *
+ * Instead of using torus, just use the icosahedron. It stays still, but draggin make it rotate on the place in the given direction
+ *
+ * Idea 2:
+ *
+ * Apply a drag event listener on all canvas
+ */

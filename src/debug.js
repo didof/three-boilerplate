@@ -80,4 +80,8 @@ export const debugFog = scene => {
   })
 }
 
+export const debugJoystickPosition = mesh => {
+  gui.add(mesh.rotation, 'y')
+}
+
 export default gui
