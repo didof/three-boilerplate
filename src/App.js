@@ -12,6 +12,8 @@ import useFog from './utils/useFog'
 import PlayerController from './entities/player/player.controller'
 import ThirdPersonCamera from './entities/player/player.camera'
 
+import { isMobileDevice, isLandscape, isPortrait } from './utils/mobileDevice'
+
 import config from './config'
 
 export default class App {
@@ -21,6 +23,11 @@ export default class App {
     this.sizes = {
       width: config.canvas.width,
       height: config.canvas.height,
+    }
+
+    this._config = {
+      isMobile: null,
+      paused: false,
     }
 
     this.previousTime = 0
@@ -35,6 +42,8 @@ export default class App {
    * Initializers
    */
   _Init = () => {
+    this._SetConfigurationBasedOnDevice()
+
     this._InitRenderer()
     this._InitScene()
     this._InitCamera()
@@ -66,6 +75,10 @@ export default class App {
     useFog(this._scene)
 
     this._updateAllMaterials()
+  }
+
+  _SetConfigurationBasedOnDevice = () => {
+    this._config.isMobile = isMobileDevice()
   }
 
   _InitCamera = () => {
@@ -119,11 +132,12 @@ export default class App {
   }
 
   _InitListeners = () => {
-    window.addEventListener('resize', this._onResizeEventTrigger)
+    this._OnResize()
+    this._OnOrientationChange()
   }
 
   _InitCharacter = () => {
-    this._player = new PlayerController(this._scene, this._camera)
+    this._player = new PlayerController(this._scene, this._camera, this._config)
     this._thirdPersonCamera = new ThirdPersonCamera(this._camera, this._player)
   }
 
@@ -154,14 +168,33 @@ export default class App {
   /**
    * Events Responses
    */
-  _onResizeEventTrigger = () => {
-    this.sizes.width = window.innerWidth
-    this.sizes.height = window.innerHeight
+  _OnResize = () => {
+    window.addEventListener(
+      'resize',
+      () => {
+        this.sizes.width = window.innerWidth
+        this.sizes.height = window.innerHeight
 
-    this._camera.aspect = this.sizes.width / this.sizes.height
-    this._camera.updateProjectionMatrix()
+        this._camera.aspect = this.sizes.width / this.sizes.height
+        this._camera.updateProjectionMatrix()
 
-    this._updateRendererSize()
+        this._updateRendererSize()
+      },
+      false
+    )
+  }
+
+  _OnOrientationChange = () => {
+    if (!this._config.isMobile) return
+
+    window.addEventListener(
+      'orientationchange',
+      () => {
+        console.log('landascape', isLandscape())
+        console.log('portrait', isPortrait())
+      },
+      false
+    )
   }
 
   /**
@@ -189,9 +222,27 @@ export default class App {
     window.requestAnimationFrame(this._Tick)
   }
 
+  _TickMobile = () => {
+    const deltaTime = this._GetTimes()
+
+    // this._controls.update()
+
+    this._thirdPersonCamera.Update(deltaTime)
+
+    this._player.Update(deltaTime)
+
+    this.renderer.render(this._scene, this._camera)
+
+    window.requestAnimationFrame(this._TickMobile)
+  }
+
   Start() {
     this.clock = new THREE.Clock()
 
-    this._Tick()
+    if (this._config.isMobile) {
+      this._TickMobile()
+    } else {
+      this._Tick()
+    }
   }
 }
