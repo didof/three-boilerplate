@@ -30,6 +30,9 @@ const config = {
     near: 20,
     far: 50,
   },
+  pause: {
+    opacity: 0.8,
+  },
 }
 
 export default config

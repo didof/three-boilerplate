@@ -33,7 +33,6 @@ export default class SurveyState extends State {
 
     if (forward || backward) {
       if (shift && !backward) {
-        console.log('1')
         this._parent.SetState('run')
         return
       }

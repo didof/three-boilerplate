@@ -11,6 +11,7 @@ import { buildFloor } from './utils/testObjects'
 import useFog from './utils/useFog'
 import PlayerController from './entities/player/player.controller'
 import ThirdPersonCamera from './entities/player/player.camera'
+import { buildPausePanel } from './utils/systemFeatures'
 
 import { isMobileDevice, isLandscape } from './utils/mobileDevice'
 
@@ -109,32 +110,17 @@ export default class App {
   // }
 
   _InitSystemFeatures = () => {
-    const geometry = new THREE.PlaneBufferGeometry(2, 2)
+    const pausePanel = buildPausePanel(this._app)
 
-    const material = new THREE.ShaderMaterial({
-      wireframe: false,
-      transparent: true,
-      uniforms: {
-        u_alpha: { value: 0.0 },
-      },
-      vertexShader: `
-        void main()
-        {
-          gl_Position =  vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float u_alpha;
+    // TODO work in progess
+    // const geometry = new THREE.TorusBufferGeometry(5, 2, 8, 8)
+    // const material = new THREE.MeshStandardMaterial({ color: 0x0000ff })
+    // const mesh = new THREE.Mesh(geometry, material)
+    // // mesh.scale.set(0.1)
+    // mesh.scale.set(0.1, 0.1, 0.1)
+    // mesh.position.set(0, 0, -10)
 
-        void main()
-        {
-          gl_FragColor = vec4(0.0, 0.0, 0.0, u_alpha);
-        }
-      `,
-    })
-    const pausePanel = new THREE.Mesh(geometry, material)
-
-    this._app.pausePanelOpacity = material.uniforms.u_alpha
+    // this._camera.add(mesh)
 
     this._scene.add(pausePanel)
   }
@@ -239,6 +225,7 @@ export default class App {
     window.addEventListener('keydown', ({ keyCode }) => {
       switch (keyCode) {
         case 80: // p
+        case 27: // esc
           if (isLandscape()) this._app.paused = !this._app.paused
           break
       }
@@ -257,10 +244,8 @@ export default class App {
   }
 
   _PlayTick = () => {
-    console.log('play')
     if (this._app.paused) {
       this._PauseTick()
-
       return
     }
 
@@ -278,17 +263,15 @@ export default class App {
   }
 
   _PauseTick = () => {
-    console.log('pause')
     const opacity = this._app.pausePanelOpacity
     if (!this._app.paused) {
-      console.log(opacity.value)
       if (opacity.value < 0.1) {
         this._PlayTick()
         return
       }
     }
 
-    if (this._app.paused && opacity.value < 0.8) {
+    if (this._app.paused && opacity.value < config.pause.opacity) {
       opacity.value += 0.1
     } else if (!this._app.paused && opacity.value > 0.0) {
       opacity.value -= 0.1
