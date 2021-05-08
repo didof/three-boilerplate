@@ -4,7 +4,6 @@ import {
   debugObj,
   debugToneMappingType,
   debugToneMappingExposure,
-  debugJoystickPosition,
 } from './debug'
 import { buildDirectionalLight, buildAmbientLight } from './utils/lights'
 import { getCubeTexture } from './utils/textures'
@@ -12,7 +11,7 @@ import { buildFloor } from './utils/testObjects'
 import useFog from './utils/useFog'
 import PlayerController from './entities/player/player.controller'
 import ThirdPersonCamera from './entities/player/player.camera'
-import { buildPausePanel, buildJoystick } from './utils/systemFeatures'
+import { buildPausePanel } from './utils/systemFeatures'
 
 import { isMobileDevice, isLandscape } from './utils/mobileDevice'
 
@@ -113,12 +112,6 @@ export default class App {
   _InitSystemFeatures = () => {
     const pausePanel = buildPausePanel(this._app)
 
-    // const joystick = buildJoystick()
-
-    // this._app.joystickIcosahedron = joystick.children[1]
-
-    // this._camera.add(joystick)
-
     this._scene.add(pausePanel)
   }
 
@@ -213,6 +206,9 @@ export default class App {
       'orientationchange',
       () => {
         this._app.paused = !isLandscape()
+        if (isLandscape) {
+          alert('Please, use landscape orientation')
+        }
       },
       false
     )
@@ -237,7 +233,7 @@ export default class App {
     const deltaTime = elapsedTime - this._previousTime
     this._previousTime = elapsedTime
 
-    return [deltaTime, elapsedTime]
+    return deltaTime
   }
 
   _PlayTick = () => {
@@ -246,7 +242,7 @@ export default class App {
       return
     }
 
-    const [deltaTime, elapsedTime] = this._GetTimes()
+    const deltaTime = this._GetTimes()
 
     // this._controls.update()
 
