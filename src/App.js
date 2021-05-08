@@ -12,7 +12,7 @@ import useFog from './utils/useFog'
 import PlayerController from './entities/player/player.controller'
 import ThirdPersonCamera from './entities/player/player.camera'
 
-import { isMobileDevice, isLandscape, isPortrait } from './utils/mobileDevice'
+import { isMobileDevice, isLandscape } from './utils/mobileDevice'
 
 import config from './config'
 
@@ -27,14 +27,16 @@ export default class App {
 
     this._config = {
       isMobile: null,
+    }
+
+    this._app = {
       paused: false,
     }
 
-    this.previousTime = 0
+    this._previousTime = 0
 
     this._InitLoaders()
     this._Init()
-
     this._InitListeners()
   }
 
@@ -79,6 +81,9 @@ export default class App {
 
   _SetConfigurationBasedOnDevice = () => {
     this._config.isMobile = isMobileDevice()
+    if (this._config.isMobile) {
+      this._app.paused = !isLandscape()
+    }
   }
 
   _InitCamera = () => {
@@ -133,7 +138,8 @@ export default class App {
 
   _InitListeners = () => {
     this._OnResize()
-    this._OnOrientationChange()
+    this._OnKeyPress()
+    if (this._config.isMobile) this._OnOrientationChange()
   }
 
   _InitCharacter = () => {
@@ -189,12 +195,21 @@ export default class App {
 
     window.addEventListener(
       'orientationchange',
-      () => {
-        console.log('landascape', isLandscape())
-        console.log('portrait', isPortrait())
+      event => {
+        this._app.paused = !isLandscape()
       },
       false
     )
+  }
+
+  _OnKeyPress = () => {
+    window.addEventListener('keydown', event => {
+      switch (event.keyCode) {
+        case 80: // p
+          if (isLandscape()) this._app.paused = !this._app.paused
+          break
+      }
+    })
   }
 
   /**
@@ -202,13 +217,14 @@ export default class App {
    */
   _GetTimes = () => {
     const elapsedTime = this.clock.getElapsedTime()
-    const deltaTime = elapsedTime - this.previousTime
-    this.previousTime = elapsedTime
+    const deltaTime = elapsedTime - this._previousTime
+    this._previousTime = elapsedTime
 
     return deltaTime
   }
 
   _Tick = () => {
+    console.log(this._app.paused)
     const deltaTime = this._GetTimes()
 
     // this._controls.update()
@@ -222,27 +238,9 @@ export default class App {
     window.requestAnimationFrame(this._Tick)
   }
 
-  _TickMobile = () => {
-    const deltaTime = this._GetTimes()
-
-    // this._controls.update()
-
-    this._thirdPersonCamera.Update(deltaTime)
-
-    this._player.Update(deltaTime)
-
-    this.renderer.render(this._scene, this._camera)
-
-    window.requestAnimationFrame(this._TickMobile)
-  }
-
   Start() {
     this.clock = new THREE.Clock()
 
-    if (this._config.isMobile) {
-      this._TickMobile()
-    } else {
-      this._Tick()
-    }
+    this._Tick()
   }
 }

@@ -10,8 +10,6 @@ export const isMobileDevice = () => {
   )
 }
 
-export const isPortrait = () =>
-  window.matchMedia('(orientation: landscape)').matches
-
-export const isLandscape = () =>
-  window.matchMedia('(orientation: portrait)').matches
+export const isLandscape = () => {
+  return screen.availHeight < screen.availWidth
+}
