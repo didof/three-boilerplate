@@ -9,7 +9,7 @@ const useFog = scene => {
 
   scene.fog = new THREE.Fog(color, near, far)
 
-  if (debug) debugFog(scene)
+  if (config.debug) debugFog(scene)
 }
 
 export default useFog

@@ -218,6 +218,7 @@ class PlayerControllerInput {
 
   _TouchMove = ({ changedTouches }) => {
     const { clientX, clientY } = changedTouches[0]
+
     if (this._previousClientX) {
       if (clientX > this._previousClientX) {
         this._keys.right = true

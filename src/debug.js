@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 import * as dat from 'dat.gui'
+import config from './config'
+
 const gui = new dat.GUI()
 
 const folders = {}
@@ -11,6 +13,8 @@ export const debugObj = {
 }
 
 export const debugToneMappingType = (renderer, updateAllMaterials) => {
+  if (!config.debug) return
+
   if (!folders.toneMapping) {
     folders.toneMapping = gui.addFolder('tone mapping')
   }
@@ -31,6 +35,8 @@ export const debugToneMappingType = (renderer, updateAllMaterials) => {
 }
 
 export const debugToneMappingExposure = renderer => {
+  if (!config.debug) return
+
   if (!folders.toneMapping) {
     folders.toneMapping = gui.addFolder('tone mapping')
   }

@@ -31,6 +31,10 @@ export default class ThirdPersonCamera {
     }
   }
 
+  _SetPlayerPosition = position => {
+    this._playerPosition = position
+  }
+
   _CalculateIdealOffset = () => {
     const x = 5 * this._playerPosition
     const idealOffset = new THREE.Vector3(x, 2, -4)

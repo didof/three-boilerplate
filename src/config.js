@@ -1,4 +1,5 @@
 const config = {
+  debug: false,
   canvas: {
     querySelector: 'canvas.webgl',
     width: window.innerWidth,
@@ -28,7 +29,6 @@ const config = {
   },
   fog: {
     enabled: true,
-    debug: true,
     color: 0xaaaaaa,
     near: 20,
     far: 50,

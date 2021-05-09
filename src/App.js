@@ -37,9 +37,10 @@ export default class App {
 
     this._previousTime = 0
 
-    this._InitLoaders()
+    this._InitLoaders(() => {
+      this._InitListeners()
+    })
     this._Init()
-    // this._InitListeners()
   }
 
   /**
@@ -47,7 +48,6 @@ export default class App {
    */
   _Init = () => {
     this._app.paused = true
-
     this._SetConfigurationBasedOnDevice()
 
     this._InitRenderer()
@@ -87,9 +87,6 @@ export default class App {
 
   _SetConfigurationBasedOnDevice = () => {
     this._config.isMobile = isMobileDevice()
-    // if (this._config.isMobile) {
-    //   this._app.paused = !isLandscape()
-    // }
   }
 
   _InitCamera = () => {
@@ -143,10 +140,10 @@ export default class App {
     this._updateRendererSize()
   }
 
-  _InitLoaders = () => {
+  _InitLoaders = cb => {
     this.loadingManager = new THREE.LoadingManager(
       () => {
-        this._InitListeners()
+        cb()
         document.body.removeChild(this._tmpLoading)
         this._app.paused = false
       },
@@ -162,7 +159,7 @@ export default class App {
   _InitListeners = () => {
     this._OnResize()
     this._OnKeyPress()
-    if (this._config.isMobile) this._OnOrientationChange()
+    this._OnOrientationChange()
   }
 
   _InitCharacter = () => {
@@ -225,9 +222,6 @@ export default class App {
       'orientationchange',
       () => {
         this._app.paused = !isLandscape()
-        if (isLandscape) {
-          alert('Please, use landscape orientation')
-        }
       },
       false
     )
@@ -240,6 +234,9 @@ export default class App {
         case 27: // esc
           if (isLandscape()) this._app.paused = !this._app.paused
           break
+        case 85: // u
+          this._ToggleFullscreen()
+          break
       }
     })
   }
@@ -247,6 +244,26 @@ export default class App {
   /**
    * Utility
    */
+  _ToggleFullscreen = () => {
+    if (this._config.isMobile) return
+
+    const fullscreenElement =
+      document.fullscreenElement || document.webkitFullscreenElement
+    if (!fullscreenElement) {
+      if (this._canvas.requestFullscreen) {
+        this._canvas.requestFullscreen()
+      } else if (canvas.webkitRequestFullscreen) {
+        this._canvas.webkitRequestFullscreen()
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen()
+      }
+    }
+  }
+
   _GetTimes = () => {
     const elapsedTime = this.clock.getElapsedTime()
     const deltaTime = elapsedTime - this._previousTime
