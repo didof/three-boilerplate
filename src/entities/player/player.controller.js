@@ -4,9 +4,10 @@ import PlayerFSM from './player.fsm'
 import globalConfig from '../../config'
 
 export default class PlayerController {
-  constructor(scene, camera, config) {
+  constructor(scene, camera, loadingManager, config) {
     this._scene = scene
     this._camera = camera
+    this._loadingManager = loadingManager
 
     this._animations = {}
 
@@ -36,11 +37,7 @@ export default class PlayerController {
   }
 
   _LoadModel = () => {
-    const loaderManager = new THREE.LoadingManager()
-    loaderManager.onLoad = () => {
-      this._stateMachine.SetState('survey')
-    }
-    const loader = new GLTFLoader(loaderManager)
+    const loader = new GLTFLoader(this._loadingManager)
     loader.load('/models/gltf/Fox/glTF/Fox.gltf', model => {
       this._target = model
 
@@ -53,6 +50,8 @@ export default class PlayerController {
       })
 
       this._InitMixerAnimations()
+
+      this._stateMachine.SetState('survey')
 
       this._scene.add(this._target.scene)
     })

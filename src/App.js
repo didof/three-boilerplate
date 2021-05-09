@@ -20,6 +20,7 @@ import config from './config'
 export default class App {
   constructor() {
     this._canvas = document.querySelector(config.canvas.querySelector)
+    this._tmpLoading = document.querySelector('.loading')
 
     this.sizes = {
       width: config.canvas.width,
@@ -38,13 +39,15 @@ export default class App {
 
     this._InitLoaders()
     this._Init()
-    this._InitListeners()
+    // this._InitListeners()
   }
 
   /**
    * Initializers
    */
   _Init = () => {
+    this._app.paused = true
+
     this._SetConfigurationBasedOnDevice()
 
     this._InitRenderer()
@@ -84,9 +87,9 @@ export default class App {
 
   _SetConfigurationBasedOnDevice = () => {
     this._config.isMobile = isMobileDevice()
-    if (this._config.isMobile) {
-      this._app.paused = !isLandscape()
-    }
+    // if (this._config.isMobile) {
+    //   this._app.paused = !isLandscape()
+    // }
   }
 
   _InitCamera = () => {
@@ -141,8 +144,19 @@ export default class App {
   }
 
   _InitLoaders = () => {
-    this.textureLoader = new THREE.TextureLoader()
-    this.cubeTextureLoader = new THREE.CubeTextureLoader()
+    this.loadingManager = new THREE.LoadingManager(
+      () => {
+        this._InitListeners()
+        document.body.removeChild(this._tmpLoading)
+        this._app.paused = false
+      },
+      (_, itemsLoaded, itemsTotal) => {
+        const progressRatio = itemsLoaded / itemsTotal
+        this._tmpLoading.innerHTML = 'Loading... ' + progressRatio * 100 + '%'
+      }
+    )
+    this.textureLoader = new THREE.TextureLoader(this.loadingManager)
+    this.cubeTextureLoader = new THREE.CubeTextureLoader(this.loadingManager)
   }
 
   _InitListeners = () => {
@@ -152,7 +166,12 @@ export default class App {
   }
 
   _InitCharacter = () => {
-    this._player = new PlayerController(this._scene, this._camera, this._config)
+    this._player = new PlayerController(
+      this._scene,
+      this._camera,
+      this.loadingManager,
+      this._config
+    )
     this._thirdPersonCamera = new ThirdPersonCamera(this._camera, this._player)
   }
 

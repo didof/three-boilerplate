@@ -7,7 +7,7 @@ export const buildPausePanel = app => {
     wireframe: false,
     transparent: true,
     uniforms: {
-      u_alpha: { value: 0.0 },
+      u_alpha: { value: 1.0 },
     },
     vertexShader: `
       void main()
