@@ -33,7 +33,7 @@ export default class ThirdPersonCamera {
 
   _CalculateIdealOffset = () => {
     const x = 5 * this._playerPosition
-    const idealOffset = new THREE.Vector3(x, 3, -7)
+    const idealOffset = new THREE.Vector3(x, 2, -4)
     idealOffset.applyQuaternion(this._player.Rotation)
     idealOffset.add(this._player.Position)
     return idealOffset
@@ -52,8 +52,8 @@ export default class ThirdPersonCamera {
 
     const t = 1 - Math.pow(0.001, deltaTime)
 
-    this._currentPosition.lerp(idealOffset, deltaTime * 1.5)
-    this._currentLookAt.lerp(idealLookat, deltaTime * 1.5)
+    this._currentPosition.lerp(idealOffset, t)
+    this._currentLookAt.lerp(idealLookat, t)
 
     this._camera.position.copy(this._currentPosition)
     this._camera.lookAt(this._currentLookAt)
